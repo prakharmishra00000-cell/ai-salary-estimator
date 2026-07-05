@@ -532,46 +532,77 @@ The user is calculating their salary breakdown. Here is the current financial st
 
 Provide a direct, concise, and accurate answer to the user's question. Reference their current numbers where appropriate to give them customized details. Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
 
-        try {
-            const modelToUse = geminiApiModel || 'gemini-1.5-flash';
-            const url = `https://generativelanguage.googleapis.com/v1/models/${modelToUse}:generateContent?key=${geminiApiKey}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: systemPrompt + `\n\nUser Question: ${query}`
+        // Models to try in priority order
+        const userPreferredModel = geminiApiModel || 'gemini-1.5-flash';
+        const fallbackQueue = [
+            userPreferredModel,
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-2.0-flash-exp',
+            'gemini-pro'
+        ];
+        
+        // Remove duplicates
+        const uniqueQueue = [...new Set(fallbackQueue)];
+        let lastError = null;
+
+        for (const model of uniqueQueue) {
+            try {
+                console.log(`Auto-selecting model: Attempting ${model}...`);
+                const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiApiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: systemPrompt + `\n\nUser Question: ${query}`
+                            }]
                         }]
-                    }]
-                })
-            });
+                    })
+                });
 
-            const data = await response.json();
-            typingDiv.remove();
+                const data = await response.json();
 
-            if (!response.ok) {
-                const errMsg = data.error ? data.error.message : 'HTTP Error ' + response.status;
-                throw new Error(errMsg);
+                if (!response.ok) {
+                    const errMsg = data.error ? data.error.message : 'HTTP Error ' + response.status;
+                    throw new Error(errMsg);
+                }
+
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    let text = data.candidates[0].content.parts[0].text;
+                    // Format response formatting
+                    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                    text = text.replace(/\n/g, '<br>');
+                    
+                    typingDiv.remove();
+                    appendMessage(text, 'system');
+                    
+                    // Save the working model to skip fallback retry next time
+                    if (geminiApiModel !== model) {
+                        geminiApiModel = model;
+                        localStorage.setItem('gemini_api_model', model);
+                        const modelSelector = document.getElementById('select-ai-model');
+                        if (modelSelector) {
+                            modelSelector.value = model;
+                        }
+                    }
+                    return; // Exit function on success
+                } else {
+                    throw new Error('Invalid response structure from Gemini API');
+                }
+            } catch (err) {
+                console.warn(`Model ${model} failed to respond:`, err.message);
+                lastError = err;
             }
-
-            if (data.candidates && data.candidates[0].content.parts[0].text) {
-                let text = data.candidates[0].content.parts[0].text;
-                // Simple markdown-to-html line conversion for lists/bold
-                text = text.replace(/\*\*(.*?)\*\"/g, '<strong>$1</strong>');
-                text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-                text = text.replace(/\n/g, '<br>');
-                appendMessage(text, 'system');
-            } else {
-                throw new Error('Invalid response structure from Gemini API');
-            }
-        } catch (err) {
-            console.error('Gemini API Error:', err);
-            typingDiv.remove();
-            appendMessage(`Could not connect to Gemini AI (${err.message}). Reverting to backup standard reply:<br><br>` + generateAnswer(query), 'system');
         }
+
+        // If all models in the queue failed
+        typingDiv.remove();
+        appendMessage(`Could not connect to Gemini AI (Tried all fallback models. Last error: ${lastError.message}). Reverting to backup standard reply:<br><br>` + generateAnswer(query), 'system');
     }
 
     function generateAnswer(query) {

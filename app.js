@@ -532,7 +532,9 @@ The user is calculating their salary breakdown. Here is the current financial st
 - Annual In-hand under Old Regime: ₹${state.oldInHand.toLocaleString('en-IN')}/year
 - Recommended Tax Regime choice: ${state.recommendedRegime}
 
-Provide a direct, concise, and accurate answer to the user's question. Reference their current numbers where appropriate to give them customized details. Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
+Provide a direct, concise, and accurate answer to the user's question. 
+CRITICAL RULE: You must always output the exact numbers provided in this financial state. Do not calculate, estimate, round, or modify any financial figures on your own. If the user asks about their specific take-home pay, tax, or deductions, repeat the numbers in the state exactly. Do not increase, decrease, or alter them by any chance. 
+Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
 
         // Models to try in priority order
         const userPreferredModel = geminiApiModel || 'gemini-2.5-flash';

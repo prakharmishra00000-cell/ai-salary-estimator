@@ -2,10 +2,10 @@
 
 :root {
     /* Color Palette - HSL (Dark Theme Default) */
-    --bg-app: hsl(222, 47%, 6%);
-    --bg-card: hsla(223, 47%, 11%, 0.65);
-    --bg-card-border: hsla(223, 47%, 20%, 0.4);
-    --bg-card-hover: hsla(223, 47%, 15%, 0.85);
+    --bg-app: hsl(0, 0%, 4%); /* Premium deep onyx black */
+    --bg-card: hsla(0, 0%, 8%, 0.7); /* Slightly translucent dark grey glass */
+    --bg-card-border: hsla(0, 0%, 18%, 0.35); /* Crisp slate borders */
+    --bg-card-hover: hsla(0, 0%, 11%, 0.85); /* Accentuated hover state */
     
     --text-primary: hsl(210, 40%, 98%);
     --text-secondary: hsl(215, 20%, 75%);

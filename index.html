@@ -271,6 +271,15 @@
                                 <input type="password" id="input-gemini-key" placeholder="Paste your Gemini API key here...">
                                 <button id="btn-save-key" class="btn-preset">Save</button>
                             </div>
+                            <div class="key-input-wrapper" style="margin-top: 0.5rem;">
+                                <label for="select-ai-model" style="align-self: center; font-size: 0.75rem;">Model:</label>
+                                <select id="select-ai-model" style="flex: 1; background: var(--bg-card); border: 1px solid var(--bg-card-border); color: var(--text-primary); padding: 0.3rem; border-radius: 4px; font-size: 0.75rem;">
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Default)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                                    <option value="gemini-pro">Gemini 1.0 Pro</option>
+                                </select>
+                            </div>
                             <p class="hint-text">Get a free API key from <a href="https://aistudio.google.com/" target="_blank" class="link-gradient">Google AI Studio</a>. Saved locally in your browser.</p>
                         </div>
                         <div class="chat-messages" id="chat-messages">

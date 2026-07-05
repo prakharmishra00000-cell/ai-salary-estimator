@@ -434,11 +434,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnToggleAiSettings = document.getElementById('btn-toggle-ai-settings');
     const aiSettingsDrawer = document.getElementById('ai-settings-drawer');
     const inputGeminiKey = document.getElementById('input-gemini-key');
+    const selectAiModel = document.getElementById('select-ai-model');
     const btnSaveKey = document.getElementById('btn-save-key');
     const aiStatusBadge = document.getElementById('ai-status-badge');
 
-    // Load key from local storage on init
+    // Load key and model from local storage on init
     let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
+    let geminiApiModel = localStorage.getItem('gemini_api_model') || 'gemini-1.5-flash';
+    selectAiModel.value = geminiApiModel;
+
     if (geminiApiKey) {
         inputGeminiKey.value = geminiApiKey;
         aiStatusBadge.innerText = 'AI Active';
@@ -455,12 +459,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save key handler
     btnSaveKey.addEventListener('click', () => {
         geminiApiKey = inputGeminiKey.value.trim();
+        const selectedModel = selectAiModel.value;
+        localStorage.setItem('gemini_api_model', selectedModel);
+        geminiApiModel = selectedModel;
+
         if (geminiApiKey) {
             localStorage.setItem('gemini_api_key', geminiApiKey);
             aiStatusBadge.innerText = 'AI Active';
             aiStatusBadge.style.background = 'var(--primary-glow)';
             aiStatusBadge.style.color = 'var(--primary)';
-            appendMessage('Gemini AI Key saved! I can now answer all custom questions.', 'system');
+            appendMessage(`Gemini AI Key saved using model <strong>${geminiApiModel}</strong>! I can now answer all custom questions.`, 'system');
         } else {
             localStorage.removeItem('gemini_api_key');
             aiStatusBadge.innerText = 'Standard';
@@ -525,7 +533,8 @@ The user is calculating their salary breakdown. Here is the current financial st
 Provide a direct, concise, and accurate answer to the user's question. Reference their current numbers where appropriate to give them customized details. Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            const modelToUse = geminiApiModel || 'gemini-1.5-flash';
+            const url = `https://generativelanguage.googleapis.com/v1/models/${modelToUse}:generateContent?key=${geminiApiKey}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {

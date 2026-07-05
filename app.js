@@ -551,11 +551,12 @@ Provide a direct, concise, and accurate answer to the user's question. Reference
         for (const model of uniqueQueue) {
             try {
                 console.log(`Auto-selecting model: Attempting ${model}...`);
-                const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiApiKey}`;
+                const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': geminiApiKey
                     },
                     body: JSON.stringify({
                         contents: [{

@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load key and model from local storage on init
     let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
-    let geminiApiModel = localStorage.getItem('gemini_api_model') || 'gemini-1.5-flash';
+    let geminiApiModel = localStorage.getItem('gemini_api_model') || 'gemini-2.5-flash';
     selectAiModel.value = geminiApiModel;
 
     if (geminiApiKey) {
@@ -535,13 +535,14 @@ The user is calculating their salary breakdown. Here is the current financial st
 Provide a direct, concise, and accurate answer to the user's question. Reference their current numbers where appropriate to give them customized details. Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
 
         // Models to try in priority order
-        const userPreferredModel = geminiApiModel || 'gemini-1.5-flash';
+        const userPreferredModel = geminiApiModel || 'gemini-2.5-flash';
         const fallbackQueue = [
             userPreferredModel,
-            'gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'gemini-2.0-flash-exp',
-            'gemini-pro'
+            'gemini-2.5-flash',
+            'gemini-3.5-flash',
+            'gemini-2.0-flash',
+            'gemini-2.5-pro',
+            'gemini-2.0-flash-lite'
         ];
         
         // Remove duplicates

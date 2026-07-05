@@ -2,19 +2,19 @@
 
 :root {
     /* Color Palette - HSL (Dark Theme Default) */
-    --bg-app: hsl(0, 0%, 4%); /* Premium deep onyx black */
-    --bg-card: hsla(0, 0%, 8%, 0.7); /* Slightly translucent dark grey glass */
-    --bg-card-border: hsla(0, 0%, 18%, 0.35); /* Crisp slate borders */
-    --bg-card-hover: hsla(0, 0%, 11%, 0.85); /* Accentuated hover state */
+    --bg-app: radial-gradient(circle at 50% 0%, hsl(222, 28%, 9%) 0%, hsl(222, 28%, 3%) 100%); /* Premium deep obsidian blue */
+    --bg-card: hsla(222, 28%, 6%, 0.85); /* Highly polished translucent dark card */
+    --bg-card-border: hsla(222, 28%, 18%, 0.45); /* High-end slate border */
+    --bg-card-hover: hsla(222, 28%, 10%, 0.95); /* Deep hover focus */
     
     --text-primary: hsl(210, 40%, 98%);
-    --text-secondary: hsl(215, 20%, 75%);
-    --text-muted: hsl(215, 16%, 55%);
+    --text-secondary: hsl(215, 20%, 78%);
+    --text-muted: hsl(215, 16%, 58%);
     
-    --primary: hsl(210, 100%, 55%); /* Professional Slate Blue */
-    --primary-glow: hsla(210, 100%, 55%, 0.25);
-    --accent: hsl(263, 90%, 65%); /* Violet Accent */
-    --accent-glow: hsla(263, 90%, 65%, 0.25);
+    --primary: hsl(217, 100%, 64%); /* Premium Royal Blue */
+    --primary-glow: hsla(217, 100%, 64%, 0.2);
+    --accent: hsl(278, 100%, 69%); /* Premium Electric Violet */
+    --accent-glow: hsla(278, 100%, 69%, 0.2);
     
     --success: hsl(142, 70%, 45%);
     --success-bg: hsla(142, 70%, 45%, 0.15);
@@ -58,7 +58,8 @@ body.light-theme {
 }
 
 body {
-    background-color: var(--bg-app);
+    background: var(--bg-app);
+    background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-body);
     min-height: 100vh;
@@ -66,7 +67,7 @@ body {
     justify-content: center;
     position: relative;
     overflow-x: hidden;
-    transition: background-color var(--transition-speed), color var(--transition-speed);
+    transition: background var(--transition-speed), color var(--transition-speed);
     padding: 2rem 1rem;
 }
 

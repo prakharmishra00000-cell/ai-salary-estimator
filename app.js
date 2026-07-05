@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appendMessage(query, 'user');
 
         // Clean up the key string
-        geminiApiKey = (geminiApiKey || '').trim();
+        geminiApiKey = (geminiApiKey || '').replace(/['"]/g, '').trim();
         if (geminiApiKey === 'undefined' || geminiApiKey === 'null') {
             geminiApiKey = '';
         }

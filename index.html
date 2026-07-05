@@ -93,10 +93,25 @@
                     </div>
                 </div>
 
+                <div class="input-group">
+                    <label for="select-state">State for Professional Tax (PT)</label>
+                    <div class="custom-select-wrapper">
+                        <select id="select-state">
+                            <option value="kar" selected>Karnataka</option>
+                            <option value="mah">Maharashtra</option>
+                            <option value="tam">Tamil Nadu</option>
+                            <option value="tel">Telangana / Andhra Pradesh</option>
+                            <option value="wbe">West Bengal</option>
+                            <option value="guj">Gujarat</option>
+                            <option value="other">Other State (Flat ₹2,500/yr)</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Advanced Settings Accordion -->
                 <div class="accordion-item">
                     <button class="accordion-trigger" id="adv-settings-trigger">
-                        <span><i data-lucide="settings" class="inline-icon"></i> Advanced Parameters</span>
+                        <span><i data-lucide="settings" class="inline-icon"></i> Advanced Parameters & HRA</span>
                         <i data-lucide="chevron-down" class="chevron"></i>
                     </button>
                     <div class="accordion-content" id="adv-settings-content">
@@ -105,18 +120,58 @@
                                 <label for="input-basic-pct">Basic Salary (% of CTC)</label>
                                 <input type="number" id="input-basic-pct" value="50" min="30" max="70" step="5">%
                             </div>
-                            <div class="adv-input-group">
-                                <label for="input-deductions-old">Old Regime Deductions (80C, etc.)</label>
-                                <div class="numeric-input-wrapper small">
-                                    <span class="currency-symbol">₹</span>
-                                    <input type="number" id="input-deductions-old" value="150000" min="0" max="1000000" step="10000">
-                                </div>
-                            </div>
                             <div class="adv-input-group-full">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="check-gratuity" checked>
-                                    Include Gratuity Deduction (4.81% of Basic)
+                                    Include Gratuity (4.81% of Basic)
                                 </label>
+                            </div>
+                            
+                            <hr class="row-divider">
+                            <span class="sub-section-title">HRA Exemption Parameters</span>
+                            
+                            <div class="adv-input-group">
+                                <label for="input-rent">Monthly Rent Paid (₹)</label>
+                                <input type="number" id="input-rent" value="0" min="0" max="500000" step="1000">
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="select-city-type">City Type for HRA</label>
+                                <select id="select-city-type">
+                                    <option value="metro">Metro (50% Basic)</option>
+                                    <option value="nonmetro" selected>Non-Metro (40% Basic)</option>
+                                </select>
+                            </div>
+
+                            <hr class="row-divider">
+                            <span class="sub-section-title">Old Regime Deductions</span>
+
+                            <div class="adv-input-group">
+                                <label for="input-ded-80c">Sec 80C (PPF, ELSS, etc.)</label>
+                                <div class="numeric-input-wrapper small">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="input-ded-80c" value="150000" min="0" max="150000" step="5000">
+                                </div>
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-ded-80d">Sec 80D (Health Insurance)</label>
+                                <div class="numeric-input-wrapper small">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="input-ded-80d" value="25000" min="0" max="100000" step="5000">
+                                </div>
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-ded-nps">Sec 80CCD(1B) (NPS Extra)</label>
+                                <div class="numeric-input-wrapper small">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="input-ded-nps" value="0" min="0" max="50000" step="5000">
+                                </div>
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-ded-24b">Sec 24(b) (Home Loan Interest)</label>
+                                <div class="numeric-input-wrapper small">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="input-ded-24b" value="0" min="0" max="200000" step="10000">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -171,9 +226,14 @@
                                 <i data-lucide="list-ordered" class="icon-info"></i>
                                 <h3>Breakdown Table</h3>
                             </div>
-                            <div class="toggle-switch">
-                                <button class="toggle-btn active" id="btn-show-monthly">Monthly</button>
-                                <button class="toggle-btn" id="btn-show-annually">Annually</button>
+                            <div class="header-actions">
+                                <div class="toggle-switch">
+                                    <button class="toggle-btn active" id="btn-show-monthly">Monthly</button>
+                                    <button class="toggle-btn" id="btn-show-annually">Annually</button>
+                                </div>
+                                <button id="btn-export-pdf" class="theme-btn small-btn" title="Download A4 PDF Report">
+                                    <i data-lucide="download"></i>
+                                </button>
                             </div>
                         </div>
                         

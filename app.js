@@ -7,7 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectPf = document.getElementById('select-pf');
     const selectRegime = document.getElementById('select-regime');
     const inputBasicPct = document.getElementById('input-basic-pct');
-    const inputDeductionsOld = document.getElementById('input-deductions-old');
+    const selectState = document.getElementById('select-state');
+    const inputRent = document.getElementById('input-rent');
+    const selectCityType = document.getElementById('select-city-type');
+    const inputDed80c = document.getElementById('input-ded-80c');
+    const inputDed80d = document.getElementById('input-ded-80d');
+    const inputDedNps = document.getElementById('input-ded-nps');
+    const inputDed24b = document.getElementById('input-ded-24b');
+    const btnExportPdf = document.getElementById('btn-export-pdf');
     const checkGratuity = document.getElementById('check-gratuity');
     
     const ctcValText = document.getElementById('ctc-val-text');
@@ -116,10 +123,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Standard event handlers for input changes
-    [selectPf, selectRegime, inputBasicPct, inputDeductionsOld, checkGratuity].forEach(element => {
-        element.addEventListener('change', calculateAndDisplay);
-        element.addEventListener('input', calculateAndDisplay);
+    [selectPf, selectRegime, inputBasicPct, selectState, inputRent, selectCityType, inputDed80c, inputDed80d, inputDedNps, inputDed24b, checkGratuity].forEach(element => {
+        if (element) {
+            element.addEventListener('change', calculateAndDisplay);
+            element.addEventListener('input', calculateAndDisplay);
+        }
     });
+
+    // Print PDF Export Handler
+    if (btnExportPdf) {
+        btnExportPdf.addEventListener('click', () => {
+            window.print();
+        });
+    }
 
     // Format currency to Indian Style (Lakhs / Crores)
     function formatINR(amount) {
@@ -130,20 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(amount);
     }
 
-    // Tax Engine: Slabs for New Tax Regime (FY 2026-27)
-    function calculateNewRegimeTax(taxableIncome) {
+    // Tax Engine: Base calculations without Surcharge
+    function calculateNewRegimeTaxWithoutSurcharge(taxableIncome) {
         if (taxableIncome <= 0) return 0;
-        
         let tax = 0;
-        
-        // Slabs
-        // Up to 4L: 0%
-        // 4L - 8L: 5%
-        // 8L - 12L: 10%
-        // 12L - 16L: 15%
-        // 16L - 24L: 20%
-        // Above 24L: 30%
-        
         if (taxableIncome <= 400000) {
             tax = 0;
         } else if (taxableIncome <= 800000) {
@@ -157,32 +163,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             tax = (400000 * 0.05) + (400000 * 0.10) + (400000 * 0.15) + (800000 * 0.20) + (taxableIncome - 2400000) * 0.30;
         }
-        
-        // Rebate under Section 87A: Income up to 12 Lakhs (post deductions) has tax rebate
-        if (taxableIncome <= 1200000) {
-            tax = 0;
-        }
-        
-        // Health & Education Cess: 4% of Income Tax
-        if (tax > 0) {
-            tax += tax * 0.04;
-        }
-        
+        if (taxableIncome <= 1200000) tax = 0;
         return tax;
     }
 
-    // Tax Engine: Slabs for Old Tax Regime
-    function calculateOldRegimeTax(taxableIncome) {
+    function calculateOldRegimeTaxWithoutSurcharge(taxableIncome) {
         if (taxableIncome <= 0) return 0;
-        
         let tax = 0;
-        
-        // Slabs
-        // Up to 2.5L: Nil
-        // 2.5L - 5L: 5%
-        // 5L - 10L: 20%
-        // Above 10L: 30%
-        
         if (taxableIncome <= 250000) {
             tax = 0;
         } else if (taxableIncome <= 500000) {
@@ -192,18 +179,96 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             tax = (250000 * 0.05) + (500000 * 0.20) + (taxableIncome - 1000000) * 0.30;
         }
-        
-        // Rebate under Section 87A: Income up to 5 Lakhs (post deductions) has rebate up to ₹12,500
-        if (taxableIncome <= 500000) {
-            tax = 0;
-        }
-        
-        // Health & Education Cess: 4%
-        if (tax > 0) {
-            tax += tax * 0.04;
-        }
-        
+        if (taxableIncome <= 500000) tax = 0;
         return tax;
+    }
+
+    // Surcharge and Marginal Relief calculations
+    function calculateSurchargeAndRelief(taxableIncome, baseTax, regime) {
+        if (baseTax <= 0) return 0;
+        
+        let surchargeRate = 0;
+        let threshold = 0;
+        
+        if (regime === 'new') {
+            if (taxableIncome > 20000000) {
+                surchargeRate = 0.25; // Capped at 25% under New Regime
+                threshold = 20000000;
+            } else if (taxableIncome > 10000000) {
+                surchargeRate = 0.15;
+                threshold = 10000000;
+            } else if (taxableIncome > 5000000) {
+                surchargeRate = 0.10;
+                threshold = 5000000;
+            }
+        } else { // old
+            if (taxableIncome > 50000000) {
+                surchargeRate = 0.37;
+                threshold = 50000000;
+            } else if (taxableIncome > 20000000) {
+                surchargeRate = 0.25;
+                threshold = 20000000;
+            } else if (taxableIncome > 10000000) {
+                surchargeRate = 0.15;
+                threshold = 10000000;
+            } else if (taxableIncome > 5000000) {
+                surchargeRate = 0.10;
+                threshold = 5000000;
+            }
+        }
+        
+        if (surchargeRate === 0) return 0;
+        
+        const rawSurcharge = baseTax * surchargeRate;
+        const totalTaxWithSurcharge = baseTax + rawSurcharge;
+        
+        // Marginal Relief base tax at threshold limit
+        let baseTaxAtThreshold = 0;
+        if (regime === 'new') {
+            baseTaxAtThreshold = calculateNewRegimeTaxWithoutSurcharge(threshold);
+        } else {
+            baseTaxAtThreshold = calculateOldRegimeTaxWithoutSurcharge(threshold);
+        }
+        
+        let surchargeRateAtThreshold = 0;
+        if (threshold === 20000000) surchargeRateAtThreshold = 0.15;
+        else if (threshold === 10000000) surchargeRateAtThreshold = 0.10;
+        
+        const surchargeAtThreshold = baseTaxAtThreshold * surchargeRateAtThreshold;
+        const totalTaxAtThreshold = baseTaxAtThreshold + surchargeAtThreshold;
+        
+        const excessIncome = taxableIncome - threshold;
+        const maxAllowedTax = totalTaxAtThreshold + excessIncome;
+        
+        if (totalTaxWithSurcharge > maxAllowedTax) {
+            return Math.max(0, maxAllowedTax - baseTax);
+        }
+        
+        return rawSurcharge;
+    }
+
+    // Tax Engine: Slabs for New Tax Regime (FY 2026-27)
+    function calculateNewRegimeTax(taxableIncome) {
+        if (taxableIncome <= 0) return 0;
+        const baseTax = calculateNewRegimeTaxWithoutSurcharge(taxableIncome);
+        const surcharge = calculateSurchargeAndRelief(taxableIncome, baseTax, 'new');
+        let totalTax = baseTax + surcharge;
+        if (totalTax > 0) {
+            totalTax += totalTax * 0.04; // Cess
+        }
+        return totalTax;
+    }
+
+    // Tax Engine: Slabs for Old Tax Regime
+    function calculateOldRegimeTax(taxableIncome) {
+        if (taxableIncome <= 0) return 0;
+        const baseTax = calculateOldRegimeTaxWithoutSurcharge(taxableIncome);
+        const surcharge = calculateSurchargeAndRelief(taxableIncome, baseTax, 'old');
+        let totalTax = baseTax + surcharge;
+        if (totalTax > 0) {
+            totalTax += totalTax * 0.04; // Cess
+        }
+        return totalTax;
     }
 
     // Core Calculation Logic
@@ -232,26 +297,84 @@ document.addEventListener('DOMContentLoaded', () => {
             annualEmployeePf = Math.min(21600, basicSalary * 0.12);
         }
         
-        // 3. Professional Tax (PT) (Usually ₹2,500 per year)
-        const annualPT = ctc > 150000 ? 2500 : 0;
-        
         // Gross taxable income definitions
         // Employer PF & Gratuity are part of CTC but subtracted to get Gross Salary
-        const annualGrossSalary = ctc - annualEmployerPf - annualGratuity;
+        const annualGrossSalary = Math.max(0, ctc - annualEmployerPf - annualGratuity);
+
+        // 3. State-wise Professional Tax (PT)
+        const stateCode = selectState.value;
+        const monthlyGrossLimit = annualGrossSalary / 12;
+        let annualPT = 0;
         
-        // Old regime calculations
-        const oldDeductions = (parseFloat(inputDeductionsOld.value) || 0) + 50000; // Deductions + 50k Standard deduction
-        // For old regime, employee PF is also tax deductible under 80C (if they didn't already exhaust 1.5L)
-        // But we assume the custom field is the overall total.
+        if (stateCode === 'kar') {
+            annualPT = (monthlyGrossLimit > 25000) ? 2400 : 0;
+        } else if (stateCode === 'mah') {
+            if (monthlyGrossLimit > 10000) {
+                annualPT = 2500;
+            } else if (monthlyGrossLimit > 7500) {
+                annualPT = 175 * 12;
+            } else {
+                annualPT = 0;
+            }
+        } else if (stateCode === 'tam') {
+            const halfYearlyGross = monthlyGrossLimit * 6;
+            let halfYearlyPT = 0;
+            if (halfYearlyGross <= 21000) halfYearlyPT = 0;
+            else if (halfYearlyGross <= 30000) halfYearlyPT = 135;
+            else if (halfYearlyGross <= 45000) halfYearlyPT = 315;
+            else if (halfYearlyGross <= 60000) halfYearlyPT = 690;
+            else if (halfYearlyGross <= 75000) halfYearlyPT = 1025;
+            else halfYearlyPT = 1250;
+            annualPT = halfYearlyPT * 2;
+        } else if (stateCode === 'tel') {
+            if (monthlyGrossLimit > 20000) annualPT = 2400;
+            else if (monthlyGrossLimit > 15000) annualPT = 1800;
+            else annualPT = 0;
+        } else if (stateCode === 'wbe') {
+            if (monthlyGrossLimit > 40000) annualPT = 2400;
+            else if (monthlyGrossLimit > 25000) annualPT = 1800;
+            else if (monthlyGrossLimit > 15000) annualPT = 1560;
+            else if (monthlyGrossLimit > 10000) annualPT = 1320;
+            else annualPT = 0;
+        } else if (stateCode === 'guj') {
+            annualPT = (monthlyGrossLimit > 12000) ? 2400 : 0;
+        } else {
+            annualPT = (annualGrossSalary > 150000) ? 2500 : 0;
+        }
+        
+        // HRA Exemption calculations
+        const monthlyRent = parseFloat(inputRent.value) || 0;
+        const annualRent = monthlyRent * 12;
+        const cityType = selectCityType.value;
+        const hraComponent = basicSalary * (cityType === 'metro' ? 0.5 : 0.4);
+        
+        let annualHraExemption = 0;
+        if (annualRent > 0) {
+            const rentMinusTenBasic = Math.max(0, annualRent - (basicSalary * 0.1));
+            annualHraExemption = Math.min(hraComponent, rentMinusTenBasic, basicSalary * (cityType === 'metro' ? 0.5 : 0.4));
+        }
+
+        // Old regime deductions
+        const manual80C = parseFloat(inputDed80c.value) || 0;
+        const manual80D = parseFloat(inputDed80d.value) || 0;
+        const manualNps = parseFloat(inputDedNps.value) || 0;
+        const manual24b = parseFloat(inputDed24b.value) || 0;
+        
+        const total80C = Math.min(150000, manual80C + annualEmployeePf);
+        const total80D = Math.min(75000, manual80D);
+        const totalNps = Math.min(50000, manualNps);
+        const total24b = Math.min(200000, manual24b);
+        
+        const oldDeductions = total80C + total80D + totalNps + total24b + annualHraExemption + 50000;
         const oldTaxableIncome = Math.max(0, annualGrossSalary - oldDeductions);
         const oldTax = calculateOldRegimeTax(oldTaxableIncome);
-        const oldInHand = annualGrossSalary - annualEmployeePf - annualPT - oldTax;
+        const oldInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualPT - oldTax);
         
         // New regime calculations
         const newDeductions = 75000; // Standard deduction
         const newTaxableIncome = Math.max(0, annualGrossSalary - newDeductions);
         const newTax = calculateNewRegimeTax(newTaxableIncome);
-        const newInHand = annualGrossSalary - annualEmployeePf - annualPT - newTax;
+        const newInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualPT - newTax);
         
         // Determine recommended regime
         const selectedMode = selectRegime.value;

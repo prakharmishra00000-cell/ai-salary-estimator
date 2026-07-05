@@ -985,3 +985,70 @@ input::-webkit-inner-spin-button {
     height: 16px;
 }
 
+/* Advanced Inputs & Export Header styling */
+.sub-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Print/PDF layout optimizations */
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0 !important;
+    }
+    
+    .glass-bg-decor,
+    .theme-btn,
+    .custom-slider,
+    .presets,
+    .toggle-switch,
+    .accordion-trigger,
+    .chat-chips-scroll,
+    .chat-input-wrapper,
+    .assistant-card,
+    #btn-export-pdf,
+    .app-header .regime-toggle-pill {
+        display: none !important;
+    }
+    
+    .card {
+        background: #fff !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        color: #000 !important;
+        page-break-inside: avoid;
+    }
+
+    .grid-layout {
+        display: block !important;
+    }
+    
+    .input-section {
+        margin-bottom: 2rem;
+    }
+    
+    .kpi-value {
+        color: #000 !important;
+        -webkit-text-fill-color: #000 !important;
+        background: none !important;
+    }
+    
+    .split-view {
+        display: grid !important;
+        grid-template-columns: 1.2fr 1fr !important;
+        gap: 1rem !important;
+    }
+}
+

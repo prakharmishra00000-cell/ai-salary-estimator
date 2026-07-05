@@ -257,9 +257,22 @@
                             <i data-lucide="message-square" class="icon-accent"></i>
                             <h3>Instant Tax & Salary Assistant</h3>
                         </div>
-                        <span class="badge online-status">Active</span>
+                        <div class="assistant-actions">
+                            <button id="btn-toggle-ai-settings" class="theme-btn small-btn" title="AI Settings">
+                                <i data-lucide="key-round"></i>
+                            </button>
+                            <span class="badge online-status" id="ai-status-badge">Standard</span>
+                        </div>
                     </div>
                     <div class="assistant-chat-container">
+                        <div class="ai-settings-drawer" id="ai-settings-drawer" style="display: none;">
+                            <label for="input-gemini-key">Gemini API Key (For unlimited open-ended AI questions):</label>
+                            <div class="key-input-wrapper">
+                                <input type="password" id="input-gemini-key" placeholder="Paste your Gemini API key here...">
+                                <button id="btn-save-key" class="btn-preset">Save</button>
+                            </div>
+                            <p class="hint-text">Get a free API key from <a href="https://aistudio.google.com/" target="_blank" class="link-gradient">Google AI Studio</a>. Saved locally in your browser.</p>
+                        </div>
                         <div class="chat-messages" id="chat-messages">
                             <div class="chat-msg system">
                                 <p>Hello! I am your interactive tax assistant. Ask me anything about your current salary breakdown or Indian tax rules.</p>

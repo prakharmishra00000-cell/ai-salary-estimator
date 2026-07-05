@@ -431,6 +431,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const btnChatSend = document.getElementById('btn-chat-send');
     const chatChips = document.getElementById('chat-chips');
+    const btnToggleAiSettings = document.getElementById('btn-toggle-ai-settings');
+    const aiSettingsDrawer = document.getElementById('ai-settings-drawer');
+    const inputGeminiKey = document.getElementById('input-gemini-key');
+    const btnSaveKey = document.getElementById('btn-save-key');
+    const aiStatusBadge = document.getElementById('ai-status-badge');
+
+    // Load key from local storage on init
+    let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
+    if (geminiApiKey) {
+        inputGeminiKey.value = geminiApiKey;
+        aiStatusBadge.innerText = 'AI Active';
+        aiStatusBadge.style.background = 'var(--primary-glow)';
+        aiStatusBadge.style.color = 'var(--primary)';
+    }
+
+    // Toggle settings drawer
+    btnToggleAiSettings.addEventListener('click', () => {
+        const isHidden = aiSettingsDrawer.style.display === 'none';
+        aiSettingsDrawer.style.display = isHidden ? 'flex' : 'none';
+    });
+
+    // Save key handler
+    btnSaveKey.addEventListener('click', () => {
+        geminiApiKey = inputGeminiKey.value.trim();
+        if (geminiApiKey) {
+            localStorage.setItem('gemini_api_key', geminiApiKey);
+            aiStatusBadge.innerText = 'AI Active';
+            aiStatusBadge.style.background = 'var(--primary-glow)';
+            aiStatusBadge.style.color = 'var(--primary)';
+            appendMessage('Gemini AI Key saved! I can now answer all custom questions.', 'system');
+        } else {
+            localStorage.removeItem('gemini_api_key');
+            aiStatusBadge.innerText = 'Standard';
+            aiStatusBadge.style.background = 'var(--success-bg)';
+            aiStatusBadge.style.color = 'var(--success)';
+            appendMessage('Gemini AI Key removed. Reverting to standard FAQ answers.', 'system');
+        }
+        aiSettingsDrawer.style.display = 'none';
+    });
 
     function appendMessage(text, sender) {
         const msgDiv = document.createElement('div');
@@ -443,11 +482,76 @@ document.addEventListener('DOMContentLoaded', () => {
     function processQuery(query) {
         appendMessage(query, 'user');
         
-        // Show typing indicator or delay for chat feel
-        setTimeout(() => {
-            const reply = generateAnswer(query);
-            appendMessage(reply, 'system');
-        }, 200);
+        if (geminiApiKey) {
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-msg system typing';
+            typingDiv.innerHTML = '<p>Thinking...</p>';
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            askGeminiAI(query, typingDiv);
+        } else {
+            // Local rule fallback
+            setTimeout(() => {
+                const reply = generateAnswer(query);
+                appendMessage(reply, 'system');
+            }, 200);
+        }
+    }
+
+    async function askGeminiAI(query, typingDiv) {
+        const state = currentCalcState;
+        const systemPrompt = `You are a helpful, professional, and friendly Indian Tax & Salary Advisor chatbot embedded directly inside a CTC Calculator.
+The user is calculating their salary breakdown. Here is the current financial state of the calculator:
+- Annual Cost to Company (CTC): ₹${state.ctc.toLocaleString('en-IN')}
+- Basic Salary: ₹${state.basicSalary.toLocaleString('en-IN')}
+- Employer Provident Fund (EPF) portion: ₹${state.annualEmployerPf.toLocaleString('en-IN')}/year
+- Employee Provident Fund (PF) deduction: ₹${state.annualEmployeePf.toLocaleString('en-IN')}/year
+- Gratuity allocation: ₹${state.annualGratuity.toLocaleString('en-IN')}/year
+- Professional Tax (PT): ₹${state.annualPT.toLocaleString('en-IN')}/year
+- Estimated Tax under New Regime: ₹${state.newTax.toLocaleString('en-IN')}/year
+- Estimated Tax under Old Regime: ₹${state.oldTax.toLocaleString('en-IN')}/year
+- Annual In-hand under New Regime: ₹${state.newInHand.toLocaleString('en-IN')}/year
+- Annual In-hand under Old Regime: ₹${state.oldInHand.toLocaleString('en-IN')}/year
+- Recommended Tax Regime choice: ${state.recommendedRegime}
+
+Provide a direct, concise, and accurate answer to the user's question. Reference their current numbers where appropriate to give them customized details. Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: systemPrompt + `\n\nUser Question: ${query}`
+                        }]
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            typingDiv.remove();
+
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                let text = data.candidates[0].content.parts[0].text;
+                // Simple markdown-to-html line conversion for lists/bold
+                text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                text = text.replace(/\n/g, '<br>');
+                appendMessage(text, 'system');
+            } else {
+                throw new Error('Invalid structure');
+            }
+        } catch (err) {
+            console.error('Gemini API Error:', err);
+            typingDiv.remove();
+            appendMessage('Could not connect to Gemini AI. Reverting to backup standard reply:<br>' + generateAnswer(query), 'system');
+        }
     }
 
     function generateAnswer(query) {

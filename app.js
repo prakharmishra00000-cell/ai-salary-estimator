@@ -481,7 +481,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function processQuery(query) {
         appendMessage(query, 'user');
-        
+
+        // Clean up the key string
+        geminiApiKey = (geminiApiKey || '').trim();
+        if (geminiApiKey === 'undefined' || geminiApiKey === 'null') {
+            geminiApiKey = '';
+        }
+
         if (geminiApiKey) {
             // Show typing indicator
             const typingDiv = document.createElement('div');
@@ -537,20 +543,25 @@ Provide a direct, concise, and accurate answer to the user's question. Reference
             const data = await response.json();
             typingDiv.remove();
 
+            if (!response.ok) {
+                const errMsg = data.error ? data.error.message : 'HTTP Error ' + response.status;
+                throw new Error(errMsg);
+            }
+
             if (data.candidates && data.candidates[0].content.parts[0].text) {
                 let text = data.candidates[0].content.parts[0].text;
                 // Simple markdown-to-html line conversion for lists/bold
-                text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                text = text.replace(/\*\*(.*?)\*\"/g, '<strong>$1</strong>');
                 text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
                 text = text.replace(/\n/g, '<br>');
                 appendMessage(text, 'system');
             } else {
-                throw new Error('Invalid structure');
+                throw new Error('Invalid response structure from Gemini API');
             }
         } catch (err) {
             console.error('Gemini API Error:', err);
             typingDiv.remove();
-            appendMessage('Could not connect to Gemini AI. Reverting to backup standard reply:<br>' + generateAnswer(query), 'system');
+            appendMessage(`Could not connect to Gemini AI (${err.message}). Reverting to backup standard reply:<br><br>` + generateAnswer(query), 'system');
         }
     }
 

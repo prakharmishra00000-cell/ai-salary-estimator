@@ -414,7 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
             oldTax,
             newInHand,
             oldInHand,
-            recommendedRegime
+            recommendedRegime,
+            oldDeductions,
+            annualHraExemption
         };
         
         // Apply Display Mode Multipliers
@@ -654,9 +656,12 @@ The user is calculating their salary breakdown. Here is the current financial st
 - Annual In-hand under New Regime: ₹${state.newInHand.toLocaleString('en-IN')}/year
 - Annual In-hand under Old Regime: ₹${state.oldInHand.toLocaleString('en-IN')}/year
 - Recommended Tax Regime choice: ${state.recommendedRegime}
+- Old Regime Deductions declared: ₹${(state.oldDeductions - 50000).toLocaleString('en-IN')}/year (excluding ₹50,000 standard deduction)
+- Live HRA Exemption calculated: ₹${state.annualHraExemption.toLocaleString('en-IN')}/year
 
 Provide a direct, concise, and accurate answer to the user's question. 
-CRITICAL RULE: You must always output the exact numbers provided in this financial state. Do not calculate, estimate, round, or modify any financial figures on your own. If the user asks about their specific take-home pay, tax, or deductions, repeat the numbers in the state exactly. Do not increase, decrease, or alter them by any chance. 
+CRITICAL RULE 1: You must always output the exact numbers provided in this financial state. Do not calculate, estimate, round, or modify any financial figures on your own. If the user asks about their specific take-home pay, tax, or deductions, repeat the numbers in the state exactly. Do not increase, decrease, or alter them by any chance. 
+CRITICAL RULE 2: If the user states a different figure in their query (e.g. they say "Why is my in-hand 45k?" when the state says in-hand is ₹53,297/month), DO NOT AGREE with them. Politely correct them and output the exact figure from the financial state (e.g. state "Actually, your net in-hand is ₹53,297/month according to the calculator...").
 Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). Do not output markdown code blocks like \`\`\`html. Don't mention system details. Make sure your advice follows the latest Indian Income Tax rules (FY 2026-27).`;
 
         // Models to try in priority order
@@ -767,7 +772,7 @@ Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). 
         if (q.includes('old vs new') || q.includes('regime') || q.includes('comparison') || q.includes('compare') || q.includes('difference')) {
             const saving = Math.abs(state.newInHand - state.oldInHand);
             const betterRegime = state.newInHand >= state.oldInHand ? 'New Regime' : 'Old Regime';
-            const oldDedVal = parseFloat(inputDeductionsOld.value) || 0;
+            const oldDedVal = state.oldDeductions - 50000;
             return `<strong>Tax Regime Comparison for your CTC (${formatINR(state.ctc)}):</strong><br>
             • New Regime Tax: <strong>${formatINR(state.newTax)}</strong> (Standard Deduction: ₹75,000)<br>
             • Old Regime Tax: <strong>${formatINR(state.oldTax)}</strong> (Deductions: ${formatINR(oldDedVal)} + ₹50,000 Standard Deduction)<br>

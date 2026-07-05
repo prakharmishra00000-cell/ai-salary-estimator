@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-Hand Salary & Tax Predictor (FY 2026-27)</title>
+    <meta name="description" content="Calculate your true monthly cash-in-hand salary from CTC with deductions for PF, Gratuity, PT, and Income Tax (New vs. Old Regimes).">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg-decor circles-1"></div>
+    <div class="glass-bg-decor circles-2"></div>
+    
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <div>
+                    <h1>In-Hand Salary <span class="gradient-text">& Tax Predictor</span></h1>
+                    <p class="subtitle">India Financial Year 2026-27 (Assessment Year 2027-28)</p>
+                </div>
+            </div>
+            <div class="regime-toggle-pill">
+                <button id="btn-toggle-theme" class="theme-btn" title="Toggle Light/Dark Theme">
+                    <i data-lucide="moon" id="theme-icon"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="grid-layout">
+            <!-- Left Side: Inputs -->
+            <section class="card glass-card input-section">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i data-lucide="sliders-horizontal" class="icon-primary"></i>
+                        <h2>Salary Inputs</h2>
+                    </div>
+                    <span class="badge">CTC Calculator</span>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-header">
+                        <label for="input-ctc">Annual CTC (Cost to Company)</label>
+                        <div class="val-display">₹ <span id="ctc-val-text">12,00,000</span></div>
+                    </div>
+                    <div class="numeric-input-wrapper">
+                        <span class="currency-symbol">₹</span>
+                        <input type="number" id="input-ctc" value="1200000" min="100000" max="100000000" step="50000">
+                    </div>
+                    <input type="range" id="slider-ctc" min="300000" max="5000000" step="50000" value="1200000" class="custom-slider">
+                    <div class="presets">
+                        <button class="btn-preset" data-val="600000">6L</button>
+                        <button class="btn-preset" data-val="1200000">12L</button>
+                        <button class="btn-preset" data-val="2500000">25L</button>
+                        <button class="btn-preset" data-val="5000000">50L</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="select-pf">Provident Fund (PF) Settings</label>
+                    <div class="custom-select-wrapper">
+                        <select id="select-pf">
+                            <option value="12basic">12% of Basic Salary (Standard)</option>
+                            <option value="capped">Capped at ₹1,800/month</option>
+                            <option value="none">No PF Deduction</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="select-regime">Tax Regime Comparison</label>
+                    <div class="custom-select-wrapper">
+                        <select id="select-regime">
+                            <option value="compare">Compare & Suggest Best Regime</option>
+                            <option value="new">New Tax Regime Only (FY 2026-27)</option>
+                            <option value="old">Old Tax Regime Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings Accordion -->
+                <div class="accordion-item">
+                    <button class="accordion-trigger" id="adv-settings-trigger">
+                        <span><i data-lucide="settings" class="inline-icon"></i> Advanced Parameters</span>
+                        <i data-lucide="chevron-down" class="chevron"></i>
+                    </button>
+                    <div class="accordion-content" id="adv-settings-content">
+                        <div class="adv-grid">
+                            <div class="adv-input-group">
+                                <label for="input-basic-pct">Basic Salary (% of CTC)</label>
+                                <input type="number" id="input-basic-pct" value="50" min="30" max="70" step="5">%
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-deductions-old">Old Regime Deductions (80C, etc.)</label>
+                                <div class="numeric-input-wrapper small">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="input-deductions-old" value="150000" min="0" max="1000000" step="10000">
+                                </div>
+                            </div>
+                            <div class="adv-input-group-full">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="check-gratuity" checked>
+                                    Include Gratuity Deduction (4.81% of Basic)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Results Dashboard -->
+            <section class="result-dashboard">
+                
+                <!-- Main KPI Hero Card -->
+                <div class="card glass-card hero-card">
+                    <div class="hero-left">
+                        <span class="kpi-label">Estimated Monthly Take-Home (In-Hand)</span>
+                        <div class="kpi-value" id="monthly-inhand-value">₹ 82,450</div>
+                        <p class="kpi-desc">
+                            Based on recommended <strong id="recommended-regime-badge" class="regime-badge text-success">New Regime</strong>
+                        </p>
+                    </div>
+                    <div class="hero-right">
+                        <div class="circular-progress-container">
+                            <div class="progress-ring-wrapper">
+                                <svg class="progress-ring" width="100" height="100">
+                                    <circle class="progress-ring__circle-bg" stroke="var(--bg-card-border)" stroke-width="8" fill="transparent" r="42" cx="50" cy="50"/>
+                                    <circle class="progress-ring__circle" id="inhand-progress-ring" stroke="var(--primary)" stroke-width="8" stroke-dasharray="263.89" stroke-dashoffset="263.89" fill="transparent" r="42" cx="50" cy="50"/>
+                                </svg>
+                                <div class="progress-text"><span id="inhand-pct-display">82</span>%</div>
+                            </div>
+                            <div class="ring-desc">of CTC is Cash-in-hand</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Split view: Chart and Detailed breakdown -->
+                <div class="split-view">
+                    <!-- Chart Card -->
+                    <div class="card glass-card chart-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i data-lucide="pie-chart" class="icon-accent"></i>
+                                <h3>CTC Breakdown</h3>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="ctc-pie-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown Table/Numbers Card -->
+                    <div class="card glass-card details-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i data-lucide="list-ordered" class="icon-info"></i>
+                                <h3>Breakdown Table</h3>
+                            </div>
+                            <div class="toggle-switch">
+                                <button class="toggle-btn active" id="btn-show-monthly">Monthly</button>
+                                <button class="toggle-btn" id="btn-show-annually">Annually</button>
+                            </div>
+                        </div>
+                        
+                        <div class="breakdown-list">
+                            <div class="breakdown-row highlight">
+                                <span class="row-label">Gross CTC</span>
+                                <span class="row-val" id="breakdown-ctc">₹ 1,00,000</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="row-label">Employer PF Contribution</span>
+                                <span class="row-val text-red" id="breakdown-epf">- ₹ 3,000</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="row-label">Gratuity Component</span>
+                                <span class="row-val text-red" id="breakdown-gratuity">- ₹ 2,004</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="row-label">Professional Tax (PT)</span>
+                                <span class="row-val text-red" id="breakdown-pt">- ₹ 200</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="row-label">Employee PF Deduction</span>
+                                <span class="row-val text-red" id="breakdown-pf">- ₹ 3,000</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span class="row-label">Income Tax (TDS)</span>
+                                <span class="row-val text-red" id="breakdown-tax">- ₹ 9,346</span>
+                            </div>
+                            <hr class="row-divider">
+                            <div class="breakdown-row total">
+                                <span class="row-label">Net In-Hand Salary</span>
+                                <span class="row-val text-green" id="breakdown-inhand">₹ 82,450</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison widget for Regimes -->
+                <div class="card glass-card comparison-card" id="regime-comparison-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="git-compare" class="icon-warning"></i>
+                            <h3>New vs. Old Tax Regime Comparison</h3>
+                        </div>
+                    </div>
+                    <div class="comparison-grid">
+                        <div class="regime-col" id="col-new-regime">
+                            <div class="regime-name">New Tax Regime <span class="best-badge" id="badge-best-new">Recommended</span></div>
+                            <div class="regime-stat">
+                                <span class="label">Tax Liability:</span>
+                                <span class="val" id="comparison-tax-new">₹ 80,000</span>
+                            </div>
+                            <div class="regime-stat">
+                                <span class="label">Monthly In-Hand:</span>
+                                <span class="val highlighted" id="comparison-inhand-new">₹ 82,450</span>
+                            </div>
+                        </div>
+                        <div class="comparison-divider-line"></div>
+                        <div class="regime-col" id="col-old-regime">
+                            <div class="regime-name">Old Tax Regime <span class="best-badge" id="badge-best-old" style="display:none">Recommended</span></div>
+                            <div class="regime-stat">
+                                <span class="label">Tax Liability:</span>
+                                <span class="val" id="comparison-tax-old">₹ 1,12,000</span>
+                            </div>
+                            <div class="regime-stat">
+                                <span class="label">Monthly In-Hand:</span>
+                                <span class="val highlighted" id="comparison-inhand-old">₹ 79,780</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="comparison-footer">
+                        <i data-lucide="info" class="info-icon"></i>
+                        <span id="regime-comparison-advice">Saving ₹32,000 annually by choosing the New Tax Regime.</span>
+                    </div>
+                </div>
+
+                <!-- Chat / Query Assistant Widget -->
+                <div class="card glass-card assistant-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="message-square" class="icon-accent"></i>
+                            <h3>Instant Tax & Salary Assistant</h3>
+                        </div>
+                        <span class="badge online-status">Active</span>
+                    </div>
+                    <div class="assistant-chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="chat-msg system">
+                                <p>Hello! I am your interactive tax assistant. Ask me anything about your current salary breakdown or Indian tax rules.</p>
+                            </div>
+                        </div>
+                        <div class="chat-chips-scroll">
+                            <div class="chat-chips" id="chat-chips">
+                                <button class="chip-btn" data-query="Why is my tax zero?">Why is my tax zero?</button>
+                                <button class="chip-btn" data-query="How is Gratuity calculated?">How is Gratuity calculated?</button>
+                                <button class="chip-btn" data-query="How is PF calculated?">How is PF calculated?</button>
+                                <button class="chip-btn" data-query="Old vs New differences?">Old vs New differences?</button>
+                            </div>
+                        </div>
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="chat-input" placeholder="Ask a query (e.g. 'What is my standard deduction?')..." autocomplete="off">
+                            <button id="btn-chat-send" title="Send Query">
+                                <i data-lucide="send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+        
+        <footer class="app-footer-credit">
+            <p>Calculations align with current Indian Union Budget provisions. Professional Tax is estimated based on standard state averages.</p>
+        </footer>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

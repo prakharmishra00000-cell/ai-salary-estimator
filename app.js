@@ -495,6 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (geminiApiKey === 'undefined' || geminiApiKey === 'null') {
             geminiApiKey = '';
         }
+        
+        console.log("Gemini API Key Loaded (Masked):", geminiApiKey ? geminiApiKey.substring(0, 6) + "..." + geminiApiKey.slice(-4) + " (Length: " + geminiApiKey.length + ")" : "Empty");
 
         if (geminiApiKey) {
             // Show typing indicator

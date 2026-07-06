@@ -14,6 +14,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputDed80d = document.getElementById('input-ded-80d');
     const inputDedNps = document.getElementById('input-ded-nps');
     const inputDed24b = document.getElementById('input-ded-24b');
+    
+    // New parameters
+    const inputCorpNps = document.getElementById('input-corp-nps');
+    const inputAllowSodexo = document.getElementById('input-allow-sodexo');
+    const inputAllowLta = document.getElementById('input-allow-lta');
+    const inputAllowInternet = document.getElementById('input-allow-internet');
+    const inputAllowFuel = document.getElementById('input-allow-fuel');
+    const btnSaveScenario = document.getElementById('btn-save-scenario');
+    const compareScenariosGrid = document.getElementById('compare-scenarios-grid');
+    const optTipsContainer = document.getElementById('opt-tips-container');
+
     const btnExportPdf = document.getElementById('btn-export-pdf');
     const checkGratuity = document.getElementById('check-gratuity');
     
@@ -123,7 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Standard event handlers for input changes
-    [selectPf, selectRegime, inputBasicPct, selectState, inputRent, selectCityType, inputDed80c, inputDed80d, inputDedNps, inputDed24b, checkGratuity].forEach(element => {
+    [
+        selectPf, selectRegime, inputBasicPct, selectState, inputRent, selectCityType, 
+        inputDed80c, inputDed80d, inputDedNps, inputDed24b, checkGratuity,
+        inputCorpNps, inputAllowSodexo, inputAllowLta, inputAllowInternet, inputAllowFuel
+    ].forEach(element => {
         if (element) {
             element.addEventListener('change', calculateAndDisplay);
             element.addEventListener('input', calculateAndDisplay);
@@ -354,6 +369,17 @@ document.addEventListener('DOMContentLoaded', () => {
             annualHraExemption = Math.min(hraComponent, rentMinusTenBasic, basicSalary * (cityType === 'metro' ? 0.5 : 0.4));
         }
 
+        // Corporate NPS (80CCD(2)) - exempt under both regimes up to 10% of basic
+        const corpNpsPct = (parseFloat(inputCorpNps.value) || 0) / 100;
+        const annualCorpNpsDeduction = basicSalary * corpNpsPct;
+        
+        // Tax-free allowances (exempt under Old regime only)
+        const sodexo = parseFloat(inputAllowSodexo.value) || 0;
+        const lta = parseFloat(inputAllowLta.value) || 0;
+        const internet = parseFloat(inputAllowInternet.value) || 0;
+        const fuel = parseFloat(inputAllowFuel.value) || 0;
+        const totalTaxFreePerks = sodexo + lta + internet + fuel;
+
         // Old regime deductions
         const manual80C = parseFloat(inputDed80c.value) || 0;
         const manual80D = parseFloat(inputDed80d.value) || 0;
@@ -366,13 +392,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const total24b = Math.min(200000, manual24b);
         
         const oldDeductions = total80C + total80D + totalNps + total24b + annualHraExemption + 50000;
-        const oldTaxableIncome = Math.max(0, annualGrossSalary - oldDeductions);
+        const oldTaxableIncome = Math.max(0, annualGrossSalary - oldDeductions - annualCorpNpsDeduction - totalTaxFreePerks);
         const oldTax = calculateOldRegimeTax(oldTaxableIncome);
         const oldInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualPT - oldTax);
         
         // New regime calculations
         const newDeductions = 75000; // Standard deduction
-        const newTaxableIncome = Math.max(0, annualGrossSalary - newDeductions);
+        const newTaxableIncome = Math.max(0, annualGrossSalary - newDeductions - annualCorpNpsDeduction);
         const newTax = calculateNewRegimeTax(newTaxableIncome);
         const newInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualPT - newTax);
         
@@ -402,7 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
             finalInHand = oldInHand;
         }
         
-        // Save current calculation state for query assistant
         currentCalcState = {
             ctc,
             basicSalary,
@@ -416,7 +441,9 @@ document.addEventListener('DOMContentLoaded', () => {
             oldInHand,
             recommendedRegime,
             oldDeductions,
-            annualHraExemption
+            annualHraExemption,
+            annualCorpNpsDeduction,
+            totalTaxFreePerks
         };
         
         // Apply Display Mode Multipliers
@@ -468,6 +495,216 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Render Chart
         renderChart(finalInHand, finalTax, annualEmployeePf + annualEmployerPf, annualGratuity, annualPT);
+
+        // Update AI Optimization tips
+        updateOptimizationTips(currentCalcState);
+    }
+
+    // Job Offer scenario evaluation array
+    let savedScenarios = JSON.parse(localStorage.getItem('saved_salary_scenarios')) || [];
+
+    // Trigger initial render of saved scenarios
+    renderScenarios();
+
+    // Event listener for saving scenario
+    if (btnSaveScenario) {
+        btnSaveScenario.addEventListener('click', () => {
+            const state = currentCalcState;
+            const scenarioName = prompt("Enter a label for this scenario (e.g. 'Company A Offer', 'Capped PF Offer'):");
+            if (scenarioName) {
+                const newScenario = {
+                    id: Date.now(),
+                    name: scenarioName,
+                    ctc: state.ctc,
+                    monthlyInhand: (state.recommendedRegime === 'New Regime' ? state.newInHand : state.oldInHand) / 12,
+                    regime: state.recommendedRegime,
+                    annualTax: state.recommendedRegime === 'New Regime' ? state.newTax : state.oldTax,
+                    pf: state.annualEmployeePf + state.annualEmployerPf,
+                    timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                };
+                savedScenarios.push(newScenario);
+                localStorage.setItem('saved_salary_scenarios', JSON.stringify(savedScenarios));
+                renderScenarios();
+            }
+        });
+    }
+
+    function renderScenarios() {
+        if (!compareScenariosGrid) return;
+        
+        if (savedScenarios.length === 0) {
+            compareScenariosGrid.innerHTML = `<p class="hint-text" style="grid-column: 1/-1; text-align: center; color: var(--text-muted); margin: 1rem 0;">No saved offers yet. Set your numbers and click "Save Current Setup" to start comparing!</p>`;
+            return;
+        }
+        
+        compareScenariosGrid.innerHTML = '';
+        
+        // Use the first saved scenario as the base for comparative deltas
+        const baseInhand = savedScenarios[0].monthlyInhand;
+        
+        savedScenarios.forEach((sc, index) => {
+            const card = document.createElement('div');
+            card.className = 'scenario-card';
+            
+            const delta = sc.monthlyInhand - baseInhand;
+            let deltaBadge = '';
+            if (index > 0) {
+                if (delta > 0) {
+                    deltaBadge = `<span class="scenario-delta plus">+${formatINR(delta)}/mo vs base</span>`;
+                } else if (delta < 0) {
+                    deltaBadge = `<span class="scenario-delta minus">-${formatINR(Math.abs(delta))}/mo vs base</span>`;
+                } else {
+                    deltaBadge = `<span class="scenario-delta" style="background: var(--bg-card-border); color: var(--text-muted);">Flat</span>`;
+                }
+            } else {
+                deltaBadge = `<span class="scenario-delta plus" style="background: var(--primary-glow); color: var(--primary); border-color: rgba(30,144,255,0.2);">Base Scenario</span>`;
+            }
+            
+            card.innerHTML = `
+                <div class="scenario-header">
+                    <span class="scenario-title">${sc.name}</span>
+                    <button class="btn-delete-scenario" data-id="${sc.id}" title="Delete Offer">
+                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+                <div class="scenario-kpi">${formatINR(sc.monthlyInhand)}<span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">/mo</span></div>
+                ${deltaBadge}
+                <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <div class="scenario-row">
+                        <span class="scenario-label">CTC:</span>
+                        <span class="scenario-val">${formatINR(sc.ctc)}</span>
+                    </div>
+                    <div class="scenario-row">
+                        <span class="scenario-label">Regime:</span>
+                        <span class="scenario-val">${sc.regime}</span>
+                    </div>
+                    <div class="scenario-row">
+                        <span class="scenario-label">TDS (Tax):</span>
+                        <span class="scenario-val">${formatINR(sc.annualTax)}/yr</span>
+                    </div>
+                    <div class="scenario-row">
+                        <span class="scenario-label">Total PF:</span>
+                        <span class="scenario-val">${formatINR(sc.pf)}/yr</span>
+                    </div>
+                </div>
+            `;
+            
+            compareScenariosGrid.appendChild(card);
+        });
+        
+        // Re-init lucide icons on dynamically created list
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+        
+        // Bind delete scenario buttons
+        compareScenariosGrid.querySelectorAll('.btn-delete-scenario').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idToDelete = parseInt(btn.getAttribute('data-id'));
+                savedScenarios = savedScenarios.filter(sc => sc.id !== idToDelete);
+                localStorage.setItem('saved_salary_scenarios', JSON.stringify(savedScenarios));
+                renderScenarios();
+            });
+        });
+    }
+
+    // Dynamic Tax Optimization recommendations planner
+    function updateOptimizationTips(state) {
+        if (!optTipsContainer) return;
+        
+        optTipsContainer.innerHTML = '';
+        const tips = [];
+        
+        const basicSalary = state.basicSalary;
+        
+        // 1. Check Section 80C
+        const manual80C = parseFloat(inputDed80c.value) || 0;
+        const total80C = Math.min(150000, manual80C + state.annualEmployeePf);
+        const remaining80C = 150000 - total80C;
+        if (remaining80C > 2000 && state.recommendedRegime === 'Old Regime' && state.oldTax > 0) {
+            const taxBracketRate = state.oldTaxableIncome > 1000000 ? 0.30 : (state.oldTaxableIncome > 500000 ? 0.20 : 0.05);
+            const potentialSavings = remaining80C * taxBracketRate * 1.04;
+            if (potentialSavings > 0) {
+                tips.push({
+                    title: "Maximize Section 80C",
+                    desc: `You have ₹${remaining80C.toLocaleString('en-IN')} remaining cap. Investing in PPF, ELSS, or NPS under Sec 80C can save you extra tax.`,
+                    saving: `Save ${formatINR(potentialSavings)}`
+                });
+            }
+        }
+        
+        // 2. Check Corporate NPS (Section 80CCD(2))
+        const currentCorpNpsPct = (parseFloat(inputCorpNps.value) || 0) / 100;
+        if (currentCorpNpsPct < 0.10) {
+            const extraEligibleNpsPct = 0.10 - currentCorpNpsPct;
+            const extraNpsAmt = basicSalary * extraEligibleNpsPct;
+            const activeRegime = state.recommendedRegime;
+            const taxableIncome = activeRegime === 'New Regime' ? state.newTaxableIncome : state.oldTaxableIncome;
+            const taxBracketRate = taxableIncome > 2400000 ? 0.30 : (taxableIncome > 1500000 ? 0.20 : 0.10);
+            
+            const potentialSavings = extraNpsAmt * taxBracketRate * 1.04;
+            const activeTax = activeRegime === 'New Regime' ? state.newTax : state.oldTax;
+            
+            if (potentialSavings > 2000 && activeTax > 0) {
+                tips.push({
+                    title: "Opt for Section 80CCD(2) Corporate NPS",
+                    desc: `Ask your employer to contribute 10% of Basic to NPS. It is fully tax-exempt under both tax regimes!`,
+                    saving: `Save ${formatINR(potentialSavings)}`
+                });
+            }
+        }
+        
+        // 3. Check NPS Individual Contribution (Sec 80CCD(1B))
+        const manualNps = parseFloat(inputDedNps.value) || 0;
+        const remainingNps = 50000 - Math.min(50000, manualNps);
+        if (remainingNps > 2000 && state.recommendedRegime === 'Old Regime' && state.oldTax > 0) {
+            const taxBracketRate = state.oldTaxableIncome > 1000000 ? 0.30 : (state.oldTaxableIncome > 500000 ? 0.20 : 0.05);
+            const potentialSavings = remainingNps * taxBracketRate * 1.04;
+            if (potentialSavings > 0) {
+                tips.push({
+                    title: "Invest in Section 80CCD(1B) NPS",
+                    desc: `Making a direct self-contribution of ₹${remainingNps.toLocaleString('en-IN')} to your NPS Tier-1 account saves tax.`,
+                    saving: `Save ${formatINR(potentialSavings)}`
+                });
+            }
+        }
+        
+        // 4. Check Section 80D (Health Insurance)
+        const manual80D = parseFloat(inputDed80d.value) || 0;
+        const remaining80D = 75000 - Math.min(75000, manual80D);
+        if (remaining80D > 5000 && state.recommendedRegime === 'Old Regime' && state.oldTax > 0) {
+            const taxBracketRate = state.oldTaxableIncome > 1000000 ? 0.30 : (state.oldTaxableIncome > 500000 ? 0.20 : 0.05);
+            const potentialSavings = remaining80D * taxBracketRate * 1.04;
+            if (potentialSavings > 0) {
+                tips.push({
+                    title: "Claim Health Insurance (Sec 80D)",
+                    desc: `You can deduct health insurance premiums for self (up to ₹25k) and parents (up to ₹50k if seniors).`,
+                    saving: `Save up to ${formatINR(potentialSavings)}`
+                });
+            }
+        }
+        
+        // Fallback or general recommendation
+        if (tips.length === 0) {
+            tips.push({
+                title: "Your Tax is Fully Optimized!",
+                desc: "Great job! You have fully utilized your tax deductions or fall under a zero-tax slab bracket.",
+                saving: "Maximized"
+            });
+        }
+        
+        tips.slice(0, 3).forEach(tip => {
+            const div = document.createElement('div');
+            div.className = 'opt-tip-card';
+            div.innerHTML = `
+                <div class="opt-tip-left">
+                    <span class="opt-tip-title">${tip.title}</span>
+                    <span class="opt-tip-desc">${tip.desc}</span>
+                </div>
+                <div class="opt-tip-saving">${tip.saving}</div>
+            `;
+            optTipsContainer.appendChild(div);
+        });
     }
 
     // Chart.js initialization and updates

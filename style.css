@@ -1053,3 +1053,158 @@ input::-webkit-inner-spin-button {
     }
 }
 
+/* AI Tax Optimization Styles */
+.opt-tips-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.opt-tip-card {
+    background: hsla(222, 28%, 10%, 0.5);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 10px;
+    padding: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all var(--transition-speed);
+}
+
+.opt-tip-card:hover {
+    border-color: var(--accent);
+    background: hsla(278, 100%, 69%, 0.05);
+}
+
+.opt-tip-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-width: 75%;
+}
+
+.opt-tip-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.opt-tip-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.opt-tip-saving {
+    background: var(--success-bg);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    color: var(--success);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Job Offer Scenario Evaluator Grid */
+.scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.scenario-card {
+    background: hsla(222, 28%, 8%, 0.6);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 12px;
+    padding: 1rem;
+    position: relative;
+    transition: all var(--transition-speed);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.scenario-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--bg-card-border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.scenario-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.btn-delete-scenario {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 4px;
+    transition: all var(--transition-speed);
+}
+
+.btn-delete-scenario:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+.scenario-kpi {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.scenario-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+}
+
+.scenario-label {
+    color: var(--text-muted);
+}
+
+.scenario-val {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.scenario-delta {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    margin-top: 0.25rem;
+    width: max-content;
+}
+
+.scenario-delta.plus {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+}
+
+.scenario-delta.minus {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+

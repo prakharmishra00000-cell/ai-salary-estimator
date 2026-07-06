@@ -120,6 +120,10 @@
                                 <label for="input-basic-pct">Basic Salary (% of CTC)</label>
                                 <input type="number" id="input-basic-pct" value="50" min="30" max="70" step="5">%
                             </div>
+                            <div class="adv-input-group">
+                                <label for="input-corp-nps">Corporate NPS (Sec 80CCD(2)) (% of Basic)</label>
+                                <input type="number" id="input-corp-nps" value="0" min="0" max="10" step="1">%
+                            </div>
                             <div class="adv-input-group-full">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="check-gratuity" checked>
@@ -140,6 +144,26 @@
                                     <option value="metro">Metro (50% Basic)</option>
                                     <option value="nonmetro" selected>Non-Metro (40% Basic)</option>
                                 </select>
+                            </div>
+
+                            <hr class="row-divider">
+                            <span class="sub-section-title">Tax-Free Allowances (Old Regime)</span>
+                            
+                            <div class="adv-input-group">
+                                <label for="input-allow-sodexo">Meal Coupons / Sodexo (Annual ₹)</label>
+                                <input type="number" id="input-allow-sodexo" value="0" min="0" max="100000" step="2400">
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-allow-lta">Leave Travel Allowance / LTA (Annual ₹)</label>
+                                <input type="number" id="input-allow-lta" value="0" min="0" max="300000" step="5000">
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-allow-internet">Phone & Internet (Annual ₹)</label>
+                                <input type="number" id="input-allow-internet" value="0" min="0" max="50000" step="1200">
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-allow-fuel">Fuel & Car Lease (Annual ₹)</label>
+                                <input type="number" id="input-allow-fuel" value="0" min="0" max="500000" step="5000">
                             </div>
 
                             <hr class="row-divider">
@@ -201,6 +225,19 @@
                             </div>
                             <div class="ring-desc">of CTC is Cash-in-hand</div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- AI Tax Optimization Card -->
+                <div class="card glass-card opt-card" style="margin-top: -0.5rem; margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="sparkles" class="icon-accent" style="color: var(--accent);"></i>
+                            <h3>AI Tax Optimization Tips</h3>
+                        </div>
+                    </div>
+                    <div class="opt-tips-container" id="opt-tips-container">
+                        <!-- Filled dynamically by app.js -->
                     </div>
                 </div>
 
@@ -361,6 +398,25 @@
                             <button id="btn-chat-send" title="Send Query">
                                 <i data-lucide="send"></i>
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multiple Offer scenario comparator panel -->
+                <div class="card glass-card offer-compare-card" style="margin-top: 1.5rem;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+                        <div class="card-title">
+                            <i data-lucide="git-compare" class="icon-accent"></i>
+                            <h3>Job Offer Evaluator</h3>
+                        </div>
+                        <button id="btn-save-scenario" class="theme-btn text-btn" style="width: auto; border-radius: 8px; padding: 0 1rem; height: 36px; font-size: 0.8rem; display: flex; gap: 0.5rem; align-items: center;">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Save Current Setup
+                        </button>
+                    </div>
+                    <div class="compare-scenarios-container">
+                        <div id="compare-scenarios-grid" class="scenarios-grid">
+                            <!-- Scenario cards filled dynamically by app.js -->
+                            <p class="hint-text" style="grid-column: 1/-1; text-align: center; color: var(--text-muted); margin: 1rem 0;">No saved offers yet. Set your numbers and click "Save Current Setup" to start comparing!</p>
                         </div>
                     </div>
                 </div>

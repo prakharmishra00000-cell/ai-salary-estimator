@@ -121,8 +121,16 @@
                                 <input type="number" id="input-basic-pct" value="50" min="30" max="70" step="5">%
                             </div>
                             <div class="adv-input-group">
+                                <label for="input-hra-pct">HRA Component (% of Basic)</label>
+                                <input type="number" id="input-hra-pct" value="40" min="10" max="50" step="10">%
+                            </div>
+                            <div class="adv-input-group">
                                 <label for="input-corp-nps">Corporate NPS (Sec 80CCD(2)) (% of Basic)</label>
                                 <input type="number" id="input-corp-nps" value="0" min="0" max="10" step="1">%
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-vpf-pct">Voluntary PF (VPF) (% of Basic)</label>
+                                <input type="number" id="input-vpf-pct" value="0" min="0" max="88" step="5">%
                             </div>
                             <div class="adv-input-group-full">
                                 <label class="checkbox-label">
@@ -141,9 +149,27 @@
                             <div class="adv-input-group">
                                 <label for="select-city-type">City Type for HRA</label>
                                 <select id="select-city-type">
-                                    <option value="metro">Metro (50% Basic)</option>
-                                    <option value="nonmetro" selected>Non-Metro (40% Basic)</option>
+                                    <option value="metro">Metro (50% Basic Limit)</option>
+                                    <option value="nonmetro" selected>Non-Metro (40% Basic Limit)</option>
                                 </select>
+                            </div>
+
+                            <hr class="row-divider">
+                            <span class="sub-section-title">Company Provided Car (Section 17(2))</span>
+                            
+                            <div class="adv-input-group">
+                                <label for="select-car-engine">Car Engine Capacity</label>
+                                <select id="select-car-engine">
+                                    <option value="none" selected>No Company Car</option>
+                                    <option value="small">Engine <= 1.6L (₹1,800/mo perq)</option>
+                                    <option value="large">Engine > 1.6L (₹2,400/mo perq)</option>
+                                </select>
+                            </div>
+                            <div class="adv-input-group" style="align-self: center; margin-top: 1rem;">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="check-driver">
+                                    Driver Provided (₹900/mo perq)
+                                </label>
                             </div>
 
                             <hr class="row-divider">
@@ -164,6 +190,18 @@
                             <div class="adv-input-group">
                                 <label for="input-allow-fuel">Fuel & Car Lease (Annual ₹)</label>
                                 <input type="number" id="input-allow-fuel" value="0" min="0" max="500000" step="5000">
+                            </div>
+
+                            <hr class="row-divider">
+                            <span class="sub-section-title">House Property Rental Income (Section 24)</span>
+                            
+                            <div class="adv-input-group">
+                                <label for="input-house-rent">Annual Rent Received (₹)</label>
+                                <input type="number" id="input-house-rent" value="0" min="0" max="5000000" step="10000">
+                            </div>
+                            <div class="adv-input-group">
+                                <label for="input-house-taxes">Municipal Taxes Paid (₹)</label>
+                                <input type="number" id="input-house-taxes" value="0" min="0" max="500000" step="1000">
                             </div>
 
                             <hr class="row-divider">

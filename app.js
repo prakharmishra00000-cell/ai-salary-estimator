@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputAllowFuel = document.getElementById('input-allow-fuel');
     const btnSaveScenario = document.getElementById('btn-save-scenario');
     const compareScenariosGrid = document.getElementById('compare-scenarios-grid');
+    
+    // Ultimate tier parameters
+    const inputHraPct = document.getElementById('input-hra-pct');
+    const inputVpfPct = document.getElementById('input-vpf-pct');
+    const selectCarEngine = document.getElementById('select-car-engine');
+    const checkDriver = document.getElementById('check-driver');
+    const inputHouseRent = document.getElementById('input-house-rent');
+    const inputHouseTaxes = document.getElementById('input-house-taxes');
     const optTipsContainer = document.getElementById('opt-tips-container');
 
     const btnExportPdf = document.getElementById('btn-export-pdf');
@@ -137,7 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
     [
         selectPf, selectRegime, inputBasicPct, selectState, inputRent, selectCityType, 
         inputDed80c, inputDed80d, inputDedNps, inputDed24b, checkGratuity,
-        inputCorpNps, inputAllowSodexo, inputAllowLta, inputAllowInternet, inputAllowFuel
+        inputCorpNps, inputAllowSodexo, inputAllowLta, inputAllowInternet, inputAllowFuel,
+        inputHraPct, inputVpfPct, selectCarEngine, checkDriver, inputHouseRent, inputHouseTaxes
     ].forEach(element => {
         if (element) {
             element.addEventListener('change', calculateAndDisplay);
@@ -357,11 +366,16 @@ document.addEventListener('DOMContentLoaded', () => {
             annualPT = (annualGrossSalary > 150000) ? 2500 : 0;
         }
         
-        // HRA Exemption calculations
+        // Voluntary PF (VPF)
+        const vpfPct = (parseFloat(inputVpfPct.value) || 0) / 100;
+        const annualVPF = basicSalary * vpfPct;
+
+        // HRA Exemption calculations based on custom HRA component
         const monthlyRent = parseFloat(inputRent.value) || 0;
         const annualRent = monthlyRent * 12;
         const cityType = selectCityType.value;
-        const hraComponent = basicSalary * (cityType === 'metro' ? 0.5 : 0.4);
+        const hraPct = (parseFloat(inputHraPct.value) || 40) / 100;
+        const hraComponent = basicSalary * hraPct;
         
         let annualHraExemption = 0;
         if (annualRent > 0) {
@@ -380,27 +394,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const fuel = parseFloat(inputAllowFuel.value) || 0;
         const totalTaxFreePerks = sodexo + lta + internet + fuel;
 
-        // Old regime deductions
+        // Car Perquisites Section 17(2) - applicable to both regimes
+        const carEngine = selectCarEngine.value;
+        const hasDriver = checkDriver.checked;
+        let annualCarPerq = 0;
+        if (carEngine === 'small') {
+            annualCarPerq += 1800 * 12;
+        } else if (carEngine === 'large') {
+            annualCarPerq += 2400 * 12;
+        }
+        if (carEngine !== 'none' && hasDriver) {
+            annualCarPerq += 900 * 12;
+        }
+
+        // House Property Net Income/Loss Section 24
+        const houseRent = parseFloat(inputHouseRent.value) || 0;
+        const houseTaxes = parseFloat(inputHouseTaxes.value) || 0;
+        const manual24b = parseFloat(inputDed24b.value) || 0;
+        
+        const netRentalIncome = Math.max(0, (houseRent - houseTaxes) * 0.70);
+        
+        // Offset rules: Old allows salary offset of loss up to 2L. New capped at 0.
+        const oldHouseOffset = Math.max(-200000, netRentalIncome - manual24b);
+        const newHouseOffset = Math.max(0, netRentalIncome - manual24b);
+
+        // Old regime deductions (VPF added to 80C)
         const manual80C = parseFloat(inputDed80c.value) || 0;
         const manual80D = parseFloat(inputDed80d.value) || 0;
         const manualNps = parseFloat(inputDedNps.value) || 0;
-        const manual24b = parseFloat(inputDed24b.value) || 0;
         
-        const total80C = Math.min(150000, manual80C + annualEmployeePf);
+        const total80C = Math.min(150000, manual80C + annualEmployeePf + annualVPF);
         const total80D = Math.min(75000, manual80D);
         const totalNps = Math.min(50000, manualNps);
-        const total24b = Math.min(200000, manual24b);
         
-        const oldDeductions = total80C + total80D + totalNps + total24b + annualHraExemption + 50000;
-        const oldTaxableIncome = Math.max(0, annualGrossSalary - oldDeductions - annualCorpNpsDeduction - totalTaxFreePerks);
+        const oldDeductions = total80C + total80D + totalNps + annualHraExemption + 50000;
+        const oldTaxableIncome = Math.max(0, annualGrossSalary - oldDeductions - annualCorpNpsDeduction - totalTaxFreePerks + annualCarPerq + oldHouseOffset);
         const oldTax = calculateOldRegimeTax(oldTaxableIncome);
-        const oldInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualPT - oldTax);
+        // Note: VPF reduces monthly take-home cash directly
+        const oldInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualVPF - annualPT - oldTax);
         
         // New regime calculations
         const newDeductions = 75000; // Standard deduction
-        const newTaxableIncome = Math.max(0, annualGrossSalary - newDeductions - annualCorpNpsDeduction);
+        const newTaxableIncome = Math.max(0, annualGrossSalary - newDeductions - annualCorpNpsDeduction + annualCarPerq + newHouseOffset);
         const newTax = calculateNewRegimeTax(newTaxableIncome);
-        const newInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualPT - newTax);
+        const newInHand = Math.max(0, annualGrossSalary - annualEmployeePf - annualVPF - annualPT - newTax);
         
         // Determine recommended regime
         const selectedMode = selectRegime.value;
@@ -443,7 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
             oldDeductions,
             annualHraExemption,
             annualCorpNpsDeduction,
-            totalTaxFreePerks
+            totalTaxFreePerks,
+            annualVPF,
+            annualCarPerq,
+            oldHouseOffset,
+            newHouseOffset
         };
         
         // Apply Display Mode Multipliers
@@ -469,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
         breakdownEpf.innerText = `- ` + formatINR(annualEmployerPf * mult);
         breakdownGratuity.innerText = `- ` + formatINR(annualGratuity * mult);
         breakdownPt.innerText = `- ` + formatINR(annualPT * mult);
-        breakdownPf.innerText = `- ` + formatINR(annualEmployeePf * mult);
+        breakdownPf.innerText = `- ` + formatINR((annualEmployeePf + annualVPF) * mult);
         breakdownTax.innerText = `- ` + formatINR(finalTax * mult);
         breakdownInhand.innerText = formatINR(finalInHand * mult);
         
@@ -494,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Render Chart
-        renderChart(finalInHand, finalTax, annualEmployeePf + annualEmployerPf, annualGratuity, annualPT);
+        renderChart(finalInHand, finalTax, annualEmployeePf + annualEmployerPf + annualVPF, annualGratuity, annualPT);
 
         // Update AI Optimization tips
         updateOptimizationTips(currentCalcState);
@@ -519,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     monthlyInhand: (state.recommendedRegime === 'New Regime' ? state.newInHand : state.oldInHand) / 12,
                     regime: state.recommendedRegime,
                     annualTax: state.recommendedRegime === 'New Regime' ? state.newTax : state.oldTax,
-                    pf: state.annualEmployeePf + state.annualEmployerPf,
+                    pf: state.annualEmployeePf + state.annualEmployerPf + state.annualVPF,
                     timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                 };
                 savedScenarios.push(newScenario);
@@ -619,15 +660,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 1. Check Section 80C
         const manual80C = parseFloat(inputDed80c.value) || 0;
-        const total80C = Math.min(150000, manual80C + state.annualEmployeePf);
+        const total80C = Math.min(150000, manual80C + state.annualEmployeePf + state.annualVPF);
         const remaining80C = 150000 - total80C;
         if (remaining80C > 2000 && state.recommendedRegime === 'Old Regime' && state.oldTax > 0) {
             const taxBracketRate = state.oldTaxableIncome > 1000000 ? 0.30 : (state.oldTaxableIncome > 500000 ? 0.20 : 0.05);
             const potentialSavings = remaining80C * taxBracketRate * 1.04;
             if (potentialSavings > 0) {
                 tips.push({
-                    title: "Maximize Section 80C",
-                    desc: `You have ₹${remaining80C.toLocaleString('en-IN')} remaining cap. Investing in PPF, ELSS, or NPS under Sec 80C can save you extra tax.`,
+                    title: "Maximize Section 80C / VPF",
+                    desc: `You have ₹${remaining80C.toLocaleString('en-IN')} remaining cap under Sec 80C. You can increase your VPF or invest in ELSS/PPF to save tax.`,
                     saving: `Save ${formatINR(potentialSavings)}`
                 });
             }
@@ -886,6 +927,7 @@ The user is calculating their salary breakdown. Here is the current financial st
 - Basic Salary: ₹${state.basicSalary.toLocaleString('en-IN')}
 - Employer Provident Fund (EPF) portion: ₹${state.annualEmployerPf.toLocaleString('en-IN')}/year
 - Employee Provident Fund (PF) deduction: ₹${state.annualEmployeePf.toLocaleString('en-IN')}/year
+- Voluntary PF (VPF) deduction: ₹${(state.annualVPF || 0).toLocaleString('en-IN')}/year
 - Gratuity allocation: ₹${state.annualGratuity.toLocaleString('en-IN')}/year
 - Professional Tax (PT): ₹${state.annualPT.toLocaleString('en-IN')}/year
 - Estimated Tax under New Regime: ₹${state.newTax.toLocaleString('en-IN')}/year
@@ -895,6 +937,9 @@ The user is calculating their salary breakdown. Here is the current financial st
 - Recommended Tax Regime choice: ${state.recommendedRegime}
 - Old Regime Deductions declared: ₹${(state.oldDeductions - 50000).toLocaleString('en-IN')}/year (excluding ₹50,000 standard deduction)
 - Live HRA Exemption calculated: ₹${state.annualHraExemption.toLocaleString('en-IN')}/year
+- Company Car Perquisite under Sec 17(2): ₹${(state.annualCarPerq || 0).toLocaleString('en-IN')}/year
+- House Property Net Offset (Old Regime): ₹${(state.oldHouseOffset || 0).toLocaleString('en-IN')}/year
+- House Property Net Offset (New Regime): ₹${(state.newHouseOffset || 0).toLocaleString('en-IN')}/year
 
 Provide a direct, concise, and accurate answer to the user's question. 
 CRITICAL RULE 1: You must always output the exact numbers provided in this financial state. Do not calculate, estimate, round, or modify any financial figures on your own. If the user asks about their specific take-home pay, tax, or deductions, repeat the numbers in the state exactly. Do not increase, decrease, or alter them by any chance. 

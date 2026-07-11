@@ -964,31 +964,67 @@ Use clean HTML tags for formatting if needed (e.g. <strong>, <br>, <ul>, <li>). 
         for (const model of uniqueQueue) {
             try {
                 console.log(`Auto-selecting model: Attempting ${model}...`);
-                const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
+                const isOpenRouter = geminiApiKey.startsWith('sk-or-') || model.includes('/');
+                let url = '';
+                let headers = {};
+                let body = {};
+                
+                if (isOpenRouter) {
+                    url = 'https://openrouter.ai/api/v1/chat/completions';
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${geminiApiKey}`
+                    };
+                    body = {
+                        model: model,
+                        messages: [
+                            { role: 'user', content: systemPrompt + `\n\nUser Question: ${query}` }
+                        ]
+                    };
+                } else {
+                    url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`;
+                    headers = {
                         'Content-Type': 'application/json',
                         'x-goog-api-key': geminiApiKey
-                    },
-                    body: JSON.stringify({
+                    };
+                    body = {
                         contents: [{
                             parts: [{
                                 text: systemPrompt + `\n\nUser Question: ${query}`
                             }]
                         }]
-                    })
+                    };
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(body)
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    const errMsg = data.error ? data.error.message : 'HTTP Error ' + response.status;
+                    const errMsg = data.error ? (data.error.message || data.error) : 'HTTP Error ' + response.status;
                     throw new Error(errMsg);
                 }
 
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    let text = data.candidates[0].content.parts[0].text;
+                let text = '';
+                if (isOpenRouter) {
+                    if (data.choices && data.choices[0] && data.choices[0].message) {
+                        text = data.choices[0].message.content;
+                    } else {
+                        throw new Error('Invalid response structure from OpenRouter API');
+                    }
+                } else {
+                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        text = data.candidates[0].content.parts[0].text;
+                    } else {
+                        throw new Error('Invalid response structure from Gemini API');
+                    }
+                }
+
+                if (text) {
                     // Format response formatting
                     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');

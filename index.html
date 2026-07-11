@@ -401,9 +401,9 @@
                     </div>
                     <div class="assistant-chat-container">
                         <div class="ai-settings-drawer" id="ai-settings-drawer" style="display: none;">
-                            <label for="input-gemini-key">Gemini API Key (For unlimited open-ended AI questions):</label>
+                            <label for="input-gemini-key">API Key (Gemini or OpenRouter):</label>
                             <div class="key-input-wrapper">
-                                <input type="password" id="input-gemini-key" placeholder="Paste your Gemini API key here...">
+                                <input type="password" id="input-gemini-key" placeholder="Paste your Gemini or OpenRouter key...">
                                 <button id="btn-save-key" class="btn-preset">Save</button>
                             </div>
                             <div class="key-input-wrapper" style="margin-top: 0.5rem;">
@@ -414,6 +414,8 @@
                                     <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                                     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                                     <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+                                    <option value="google/gemma-4-31b-it">Gemma 4 31B (OpenRouter)</option>
+                                    <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (OpenRouter)</option>
                                 </select>
                             </div>
                             <p class="hint-text">Get a free API key from <a href="https://aistudio.google.com/" target="_blank" class="link-gradient">Google AI Studio</a>. Saved locally in your browser.</p>
